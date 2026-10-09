@@ -16,3 +16,7 @@ interface MatchStat {
   serveErrors: number;
   digs: number;
 }
+
+export function matchPoints(stat: MatchStat): number {
+  return stat.attackPoints + stat.aces + stat.blocks;
+}
