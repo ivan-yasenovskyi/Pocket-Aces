@@ -7,7 +7,7 @@ export default function Home() {
         number="11"
         name="Yasenovskyi"
         position="Przyjmujący"
-        image="/images/player_11.webp"
+        image="/images/player-11.webp"
         suit="club"
       />
     </main>
