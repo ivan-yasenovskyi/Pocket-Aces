@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-interface PlayingCardProps {
+export interface PlayingCardProps {
   number: string;
   name: string;
   position: string;
