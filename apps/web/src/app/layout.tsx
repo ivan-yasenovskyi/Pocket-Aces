@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Big_Shoulders, Onest } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
 
 const bigShoulders = Big_Shoulders({
   variable: "--font-big-shoulders",
@@ -26,7 +25,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${bigShoulders.variable} ${onest.variable} antialiased`}
     >
       <body className="bg-ice text-ink font-sans">
-        <Header />
         {children}
       </body>
     </html>
