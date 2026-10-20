@@ -1,6 +1,12 @@
-import type { PlayingCardProps } from "@/components/PlayingCard";
+export interface Player {
+  number: string;
+  name: string;
+  position: string;
+  image: string;
+  suit: "club" | "spade";
+}
 
-export const players: PlayingCardProps[] = [
+export const players: Player[] = [
   {
     number: "11",
     name: "Yasenovskyi",
@@ -12,7 +18,7 @@ export const players: PlayingCardProps[] = [
     number: "10",
     name: "Kornienko",
     position: "Atakujący",
-    image: "/images/player_010.png",
+    image: "/images/player-10.webp",
     suit: "spade",
   },
   {
@@ -26,14 +32,14 @@ export const players: PlayingCardProps[] = [
     number: "23",
     name: "Marynenko",
     position: "Środkowy",
-    image: "/images/player_23.png",
+    image: "/images/player-23.webp",
     suit: "spade",
   },
   {
     number: "13",
     name: "Mykytyn",
     position: "Przyjmujący",
-    image: "/images/player_13.png",
+    image: "/images/player-13.webp",
     suit: "club",
   },
   {
