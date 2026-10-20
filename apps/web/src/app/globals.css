@@ -11,3 +11,8 @@
   --font-sans: var(--font-onest);
   --font-display: var(--font-big-shoulders);
 }
+
+:focus-visible {
+  outline: 3px solid var(--color-ball);
+  outline-offset: 3px;
+}
