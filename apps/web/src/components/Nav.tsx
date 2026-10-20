@@ -6,7 +6,7 @@ const links = [
   { href: "#team", label: "Drużyna" },
   { href: "#matches", label: "Mecze" },
   { href: "#tournament", label: "Turniej" },
-  { href: "#hub", label: "Hub" },
+  { href: "/hub", label: "Hub" },
 ];
 
 export function Nav() {

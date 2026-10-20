@@ -17,6 +17,7 @@
   --animate-number-in: number-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
   --animate-glow: glow 5s ease-in-out infinite alternate;
   --animate-caption-in: caption-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
 
   @keyframes player-in {
     from { opacity: 0; transform: translateY(60px) scale(0.96); }
@@ -41,6 +42,11 @@
   @keyframes glow {
     from { opacity: 0.7; transform: scale(1); }
     to { opacity: 1; transform: scale(1.08); }
+  }
+
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: none; }
   }
 
   @keyframes drift {
