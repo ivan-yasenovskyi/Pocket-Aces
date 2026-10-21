@@ -53,10 +53,21 @@ const links: { href: string; label: string; current?: boolean; icon: ReactNode }
 interface HubSidebarProps {
   name: string;
   player: Player | undefined;
+  isCaptain: boolean;
   onLogout: () => void;
 }
 
-export function HubSidebar({ name, player, onLogout }: HubSidebarProps) {
+const captainLink: (typeof links)[number] = {
+  href: "/admin",
+  label: "Panel kapitana",
+  icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={icon} aria-hidden="true">
+      <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z" />
+    </svg>
+  ),
+};
+
+export function HubSidebar({ name, player, isCaptain, onLogout }: HubSidebarProps) {
   return (
     <aside className="relative flex max-w-full flex-[1_1_260px] flex-col gap-5.5 overflow-hidden bg-navy px-4.5 py-6 text-white">
       <div
@@ -70,7 +81,7 @@ export function HubSidebar({ name, player, onLogout }: HubSidebarProps) {
       </Link>
 
       <nav aria-label="Hub" className="relative flex flex-col gap-1">
-        {links.map((link) => (
+        {(isCaptain ? [...links, captainLink] : links).map((link) => (
           <Link
             key={link.label}
             href={link.href}

@@ -3,10 +3,12 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { players } from "@/data/players";
+import { useT } from "@/i18n/locale";
 
 const INTERVAL_MS = 4000;
 
 export function HeroPlayer() {
+  const t = useT();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const current = players[active];
@@ -64,7 +66,7 @@ export function HeroPlayer() {
         <div key={current.number} className="animate-caption-in motion-reduce:animate-none">
           <p className="font-display text-[34px] leading-none font-extrabold">{current.name}</p>
           <p className="mt-1 text-sm text-[#e3f4fd]">
-            #{current.number} · {current.position}
+            #{current.number} · {t.positions[current.position] ?? current.position}
           </p>
         </div>
       </div>
@@ -74,7 +76,7 @@ export function HeroPlayer() {
           <button
             key={player.number}
             type="button"
-            aria-label={`Pokaż zawodnika ${player.number}`}
+            aria-label={`${t.hero.showPlayer} ${player.number}`}
             aria-pressed={i === active}
             onClick={() => setActive(i)}
             className={`h-2.5 cursor-pointer rounded-full transition-[width,background-color] duration-300 ${i === active ? "w-6 bg-ball" : "w-2.5 bg-white/45 hover:bg-white/80"}`}

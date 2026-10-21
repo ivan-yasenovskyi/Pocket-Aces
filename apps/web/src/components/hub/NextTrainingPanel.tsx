@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { comingText, formatTraining, type NextTraining } from "@/lib/api";
+import { comingText, formatTraining, type Answer, type NextTraining } from "@/lib/api";
 import { btnGhost, btnNo, btnYes, panel } from "./styles";
 
 interface NextTrainingPanelProps {
   training: NextTraining | null;
-  onAnswer: (answer: "yes" | "no") => Promise<void>;
+  onAnswer: (answer: Answer) => Promise<void>;
 }
 
 export function NextTrainingPanel({ training, onAnswer }: NextTrainingPanelProps) {
@@ -23,10 +23,10 @@ export function NextTrainingPanel({ training, onAnswer }: NextTrainingPanelProps
     );
   }
 
-  const answered = training.myAnswer === "yes" || training.myAnswer === "no";
+  const answered = training.myAnswer !== null;
   const showButtons = !answered || editing;
 
-  async function answer(value: "yes" | "no") {
+  async function answer(value: Answer) {
     setBusy(true);
     try {
       await onAnswer(value);
@@ -55,6 +55,9 @@ export function NextTrainingPanel({ training, onAnswer }: NextTrainingPanelProps
             <button type="button" disabled={busy} onClick={() => answer("no")} className={btnNo}>
               Nie dam rady
             </button>
+            <button type="button" disabled={busy} onClick={() => answer("maybe")} className={btnNo}>
+              Jeszcze nie wiem
+            </button>
           </div>
         </div>
       )}
@@ -73,6 +76,12 @@ export function NextTrainingPanel({ training, onAnswer }: NextTrainingPanelProps
       {!showButtons && training.myAnswer === "no" && (
         <div role="status" className="mt-3.5 animate-pop rounded-[14px] bg-ice p-3.5 font-semibold text-[#24456e] motion-reduce:animate-none">
           Jasne, trener wie, że cię nie będzie.
+        </div>
+      )}
+
+      {!showButtons && training.myAnswer === "maybe" && (
+        <div role="status" className="mt-3.5 animate-pop rounded-[14px] bg-[#fff4d1] p-3.5 font-semibold text-[#6b4e00] motion-reduce:animate-none">
+          Daj znać, gdy będziesz wiedzieć — trener liczy skład.
         </div>
       )}
 

@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { players } from "@/data/players";
 import { ApiError, api, type Me } from "@/lib/api";
+import { AttendanceLeadersPanel } from "./AttendanceLeadersPanel";
 import { AttendancePanel } from "./AttendancePanel";
 import { GoingPanel } from "./GoingPanel";
 import { HubPlayerCard } from "./HubPlayerCard";
 import { HubSidebar } from "./HubSidebar";
 import { NextTrainingPanel } from "./NextTrainingPanel";
 import { PlayerPicker } from "./PlayerPicker";
+import { TeamAttendancePanel } from "./TeamAttendancePanel";
+import { UpcomingPanel } from "./UpcomingPanel";
 
 type State = { kind: "loading" } | { kind: "error" } | { kind: "ready"; me: Me };
 
@@ -53,7 +56,7 @@ export function HubView() {
 
   return (
     <div className="flex min-h-screen flex-wrap bg-ice">
-      <HubSidebar name={me.user.name} player={player} onLogout={logout} />
+      <HubSidebar name={me.user.name} player={player} isCaptain={me.isCaptain} onLogout={logout} />
 
       <main className="min-w-0 flex-[999_1_560px] px-10 pt-9 pb-14 max-[560px]:px-4">
         <div className="mx-auto flex max-w-[1120px] flex-col gap-6">
@@ -87,6 +90,15 @@ export function HubView() {
                 />
                 <GoingPanel training={me.nextTraining} />
               </section>
+
+              <UpcomingPanel
+                trainings={me.upcoming}
+                onAnswer={async (trainingId, answer) => update(await api.answer(trainingId, answer))}
+              />
+
+              <AttendanceLeadersPanel />
+
+              {me.isCaptain && <TeamAttendancePanel />}
             </>
           ) : (
             <PlayerPicker

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TelegramLogin } from "@/components/auth/TelegramLogin";
 
 export const metadata: Metadata = {
-  title: "Logowanie · Pocket Aces",
+  title: "Logowanie",
 };
 
 export default function LoginPage() {

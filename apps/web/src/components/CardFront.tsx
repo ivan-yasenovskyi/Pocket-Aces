@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import type { Player } from "@/data/players";
 import { SuitIcon } from "@/components/SuitIcon";
+import { useT } from "@/i18n/locale";
 
 const sizes = {
   lg: {
@@ -27,6 +30,7 @@ interface CardFrontProps {
 
 export function CardFront({ player, size, eager = false }: CardFrontProps) {
   const s = sizes[size];
+  const t = useT();
 
   return (
     <div className="absolute inset-0 rounded-[18px] bg-white shadow-[0_34px_60px_-24px_rgba(2,20,55,0.7)] ring-1 ring-navy/8 ring-inset backface-hidden">
@@ -51,7 +55,7 @@ export function CardFront({ player, size, eager = false }: CardFrontProps) {
 
       <div className={`absolute text-ink ${s.caption}`}>
         <p className={`font-display leading-none font-extrabold ${s.name}`}>{player.name}</p>
-        <p className="mt-1 text-[13px] text-muted">{player.position}</p>
+        <p className="mt-1 text-[13px] text-muted">{t.positions[player.position] ?? player.position}</p>
       </div>
 
       {size === "lg" && (
