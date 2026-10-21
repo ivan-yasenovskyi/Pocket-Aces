@@ -62,6 +62,13 @@ function dayAfterTomorrow(): string {
   return `${get("day")}.${get("month")}`;
 }
 
+function weekdayInThreeDays(): string {
+  const names = ["нд", "пн", "вт", "ср", "чт", "пт", "сб"];
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Warsaw", weekday: "short" })
+    .format(new Date(Date.now() + 3 * 24 * 3600_000));
+  return names[["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(weekday)];
+}
+
 test("повний сценарій у групі", async () => {
   const { store, calls, command, vote, texts } = setup();
 
@@ -106,7 +113,7 @@ test("повний сценарій у групі", async () => {
   await command(ADMIN, "/rozklad");
   assert.match(texts().at(-1)!, /✅ 2 · 🤔 0 · ❌ 1/);
 
-  await command(ADMIN, "/rozklad_dodaty ср 20:30 Hala B");
+  await command(ADMIN, `/rozklad_dodaty ${weekdayInThreeDays()} 20:30 Hala B`);
   assert.equal(store.data.slots.length, 1);
   await command(ADMIN, "/rozklad_vydalyty 1");
   assert.equal(store.data.slots.length, 0);
