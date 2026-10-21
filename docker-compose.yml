@@ -1,0 +1,40 @@
+services:
+  api:
+    build: ./apps/api
+    restart: unless-stopped
+    env_file: ./apps/api/.env
+    environment:
+      NODE_ENV: production
+      DATA_FILE: /data/db.json
+      PORT: "4000"
+    volumes:
+      - pa-data:/data
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        API_URL: http://api:4000
+        SITE_URL: https://${SITE_DOMAIN}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - web
+
+volumes:
+  pa-data:
+  caddy-data:
