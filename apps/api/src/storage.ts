@@ -46,6 +46,116 @@ export interface Session {
   checkedAt: string;
 }
 
+export interface Score {
+  us: number;
+  them: number;
+}
+
+export interface MatchPoll {
+  chatId: number;
+  pollId: string;
+  messageId: number;
+  votes: Record<string, Answer>;
+  reminded: boolean;
+  remindedDayBefore?: boolean;
+  closed: boolean;
+}
+
+export interface Lineup {
+  positions: Record<string, string | null>;
+  libero: string | null;
+}
+
+export interface Match {
+  id: string;
+  startsAt: string;
+  opponent: string;
+  place: string;
+  result: Score | null;
+  source?: "manual" | "league";
+  round?: number;
+  home?: boolean;
+  sector?: string;
+  sets?: Score[];
+  poll?: MatchPoll | null;
+  lineup?: Lineup | null;
+}
+
+export interface StatLine {
+  matchId: string;
+  playerNumber: string;
+  points: number;
+  aces: number;
+  blocks: number;
+  serve: number | null;
+}
+
+export type TeamLevel = "1st" | "2nd" | "3rd" | "independent";
+
+export interface Registration {
+  id: string;
+  createdAt: string;
+  teamName: string;
+  city: string;
+  level: TeamLevel;
+  captainName: string;
+  email: string;
+  phone: string;
+  instagram: string;
+  status?: RegistrationStatus;
+}
+
+export type RegistrationStatus = "pending" | "paid" | "rejected";
+
+export interface Photo {
+  id: string;
+  matchId: string;
+  fileId: string;
+  width: number;
+  height: number;
+  addedAt: string;
+}
+
+export interface StandingRow {
+  position: number;
+  team: string;
+  matches: number;
+  points: number;
+  setsWon: number;
+  setsLost: number;
+}
+
+export interface TournamentSettings {
+  name?: string;
+  date?: string | null;
+  place?: string;
+  feePln?: number;
+  maxTeams?: number;
+  registrationOpen?: boolean;
+}
+
+export interface CupGroup {
+  name: string;
+  teams: string[];
+}
+
+export interface CupGame {
+  id: string;
+  stage: "group" | "playoff";
+  group: string | null;
+  label: string;
+  home: string;
+  away: string;
+  startsAt: string | null;
+  court: string;
+  sets: Score[];
+}
+
+export interface Cup {
+  groups: CupGroup[];
+  games: CupGame[];
+}
+
 export interface Data {
   chatId: number | null;
   slots: Slot[];
@@ -54,6 +164,13 @@ export interface Data {
   links: Record<string, string>;
   loginTokens: LoginToken[];
   sessions: Session[];
+  matches: Match[];
+  stats: StatLine[];
+  registrations: Registration[];
+  photos: Photo[];
+  standings: { updatedAt: string; rows: StandingRow[] } | null;
+  tournament: TournamentSettings;
+  cup: Cup;
 }
 
 export interface Store {
@@ -62,7 +179,22 @@ export interface Store {
 }
 
 function emptyData(): Data {
-  return { chatId: null, slots: [], trainings: [], members: {}, links: {}, loginTokens: [], sessions: [] };
+  return {
+    chatId: null,
+    slots: [],
+    trainings: [],
+    members: {},
+    links: {},
+    loginTokens: [],
+    sessions: [],
+    matches: [],
+    stats: [],
+    registrations: [],
+    photos: [],
+    standings: null,
+    tournament: {},
+    cup: { groups: [], games: [] },
+  };
 }
 
 export async function openStore(filePath: string): Promise<Store> {

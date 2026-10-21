@@ -1,5 +1,5 @@
 import { STAT_DAYS } from "../config.ts";
-import type { Answer, Data, Slot, Training } from "../storage.ts";
+import type { Answer, Data, Match, Registration, Slot, Training } from "../storage.ts";
 import { formatWhen, pad, weekdayName } from "../time.ts";
 
 export const POLL_OPTIONS: { answer: Answer; text: string }[] = [
@@ -24,6 +24,22 @@ export const HELP_TEXT = [
   "/rozklad_vydalyty 1 — прибрати постійне тренування №1",
   "/skasuvaty — скасувати найближче тренування",
   "/vidvyazaty 11 — відв'язати картку гравця на сайті",
+  "",
+  "<b>Матчі</b>",
+  "Матчі ліги бот сам бере з siatka-lodzkie.org і в четвер перед грою о 10:00 публікує опитування «хто грає» (у середу ліга часто змінює час).",
+  "/sklad — хто грає в найближчому матчі",
+  "/matchi — список матчів",
+  "",
+  "<b>Матчі (адміністратори)</b>",
+  "/liga — оновити матчі з сайту ліги зараз",
+  "Фото з матчу — надішли фото чи альбом з підписом /foto (або /foto 3 — до матчу №3), і вони з'являться на сайті",
+  "/match 02.11 18:00 Суперник | Зал — додати матч",
+  "/rakhunok 3:1 — рахунок останнього зіграного матчу (або /rakhunok 2 3:1 — матчу №2)",
+  "/pokaznyky 11 12 2 1 87 — показники гравця №11 в останньому матчі: очки, ейси, блоки, подача %",
+  "/match_vydalyty 2 — видалити матч №2",
+  "/zayavky — заявки на турнір із сайту",
+  "",
+  "Усе це (і турнір) зручніше робити на сайті: Panel kapitana — /admin",
 ].join("\n");
 
 export const LOGIN_OK_TEXT =
@@ -76,7 +92,11 @@ export function countVotes(training: Training): Record<Answer, number> {
   return counts;
 }
 
-export function attendanceText(training: Training, data: Data, title = "🏐"): string {
+export function attendanceText(
+  training: Pick<Training, "startsAt" | "place" | "votes">,
+  data: Data,
+  title = "🏐",
+): string {
   const groups: Record<Answer, string[]> = { yes: [], no: [], maybe: [] };
   for (const [userId, answer] of Object.entries(training.votes)) {
     groups[answer].push(nameOf(data, userId));
@@ -118,6 +138,52 @@ export function scheduleText(data: Data, upcoming: Training[]): string {
     }
   }
   return lines.join("\n");
+}
+
+export function matchText(match: Match): string {
+  const result = match.result
+    ? ` ${match.result.us > match.result.them ? "✅" : "❌"} ${match.result.us}:${match.result.them}`
+    : "";
+  return `${formatWhen(new Date(match.startsAt))} — ${match.opponent}${placeSuffix(match.place)}${result}`;
+}
+
+export function matchup(match: Match): string {
+  return match.home === false ? `${match.opponent} – Pocket Aces` : `Pocket Aces – ${match.opponent}`;
+}
+
+export function matchPollQuestion(match: Match): string {
+  const round = match.round ? ` (${match.round} kolejka)` : "";
+  return `🏐 Матч${round}: ${matchup(match)} · ${formatWhen(new Date(match.startsAt))}${placeSuffix(match.place)}. Хто грає?`;
+}
+
+export function matchesListText(matches: Match[]): string {
+  if (matches.length === 0) return "Матчів ще немає. Додати: /match 02.11 18:00 Суперник | Зал";
+  return [
+    "<b>🏆 Матчі</b>",
+    "",
+    ...matches.map((match, i) => `${i + 1}. ${escapeHtml(matchText(match))}`),
+  ].join("\n");
+}
+
+const LEVEL_NAMES: Record<Registration["level"], string> = {
+  "1st": "I ліга",
+  "2nd": "II ліга",
+  "3rd": "III ліга",
+  independent: "без ліги",
+};
+
+export function registrationText(r: Registration): string {
+  const city = r.city ? `, ${r.city}` : "";
+  const instagram = r.instagram ? ` · instagram.com/${r.instagram}` : "";
+  return `<b>${escapeHtml(r.teamName)}</b>${escapeHtml(city)} (${LEVEL_NAMES[r.level]})\nКапітан: ${escapeHtml(r.captainName)} · ${escapeHtml(r.phone)} · ${escapeHtml(r.email)}${escapeHtml(instagram)}`;
+}
+
+export function registrationsText(registrations: Registration[], maxTeams: number): string {
+  if (registrations.length === 0) return "Заявок на турнір ще немає.";
+  return [
+    `<b>📝 Заявки на турнір</b> (${registrations.length}/${maxTeams})`,
+    ...registrations.map((r, i) => `${i + 1}. ${registrationText(r)}`),
+  ].join("\n\n");
 }
 
 export function statText(data: Data, trainings: Training[]): string {

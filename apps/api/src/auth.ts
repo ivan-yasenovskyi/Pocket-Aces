@@ -24,6 +24,15 @@ export async function isGroupMember(api: Api, chatId: number, userId: number): P
   }
 }
 
+export async function isGroupAdmin(api: Api, chatId: number, userId: number): Promise<boolean> {
+  try {
+    const member = await api.getChatMember(chatId, userId);
+    return member.status === "creator" || member.status === "administrator";
+  } catch {
+    return false;
+  }
+}
+
 function removeExpiredTokens(data: Data, now: Date): void {
   const oldest = now.getTime() - LOGIN_TOKEN_MINUTES * MINUTE;
   data.loginTokens = data.loginTokens.filter((t) => new Date(t.createdAt).getTime() >= oldest);

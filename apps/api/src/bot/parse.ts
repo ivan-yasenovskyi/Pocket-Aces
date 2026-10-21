@@ -29,8 +29,11 @@ function parseTime(hourText: string, minuteText: string): { hour: number; minute
   return { hour, minute };
 }
 
-export function parseTraining(text: string, now: Date): ParsedTraining | { error: string } {
-  const usage = "Формат: /trening 24.10 19:00 Назва залу";
+export function parseTraining(
+  text: string,
+  now: Date,
+  usage = "Формат: /trening 24.10 19:00 Назва залу",
+): ParsedTraining | { error: string } {
   const match = text.trim().match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2}|\d{4}))?\s+(\d{1,2})[:.](\d{2})(?:\s+(.+))?$/);
   if (!match) return { error: usage };
 
@@ -73,4 +76,48 @@ export function parseSlot(text: string): ParsedSlot | { error: string } {
   if (!time) return { error: `Неправильний час. ${usage}` };
 
   return { weekday, ...time, place: (placeText ?? "").trim() };
+}
+
+export interface ParsedMatch {
+  startsAt: Date;
+  opponent: string;
+  place: string;
+}
+
+export function parseMatch(text: string, now: Date): ParsedMatch | { error: string } {
+  const usage = "Формат: /match 02.11 18:00 Суперник | Зал";
+  const parsed = parseTraining(text, now, usage);
+  if ("error" in parsed) return parsed;
+  const [opponent = "", place = ""] = parsed.place.split("|").map((part) => part.trim());
+  if (!opponent) return { error: `Вкажи суперника. ${usage}` };
+  return { startsAt: parsed.startsAt, opponent, place };
+}
+
+export function parseScore(text: string): { us: number; them: number } | null {
+  const match = text.trim().match(/^(\d)\s*[:-]\s*(\d)$/);
+  if (!match) return null;
+  return { us: Number(match[1]), them: Number(match[2]) };
+}
+
+export interface ParsedStatLine {
+  playerNumber: string;
+  points: number;
+  aces: number;
+  blocks: number;
+  serve: number | null;
+}
+
+export function parseStatLine(text: string): ParsedStatLine | { error: string } {
+  const usage = "Формат: /pokaznyky 11 12 2 1 87 (номер, очки, ейси, блоки, подача % — необов'язково)";
+  const match = text.trim().match(/^(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})(?:\s+(\d{1,3}))?$/);
+  if (!match) return { error: usage };
+  const serve = match[5] === undefined ? null : Number(match[5]);
+  if (serve !== null && serve > 100) return { error: `Подача — це відсоток від 0 до 100. ${usage}` };
+  return {
+    playerNumber: match[1],
+    points: Number(match[2]),
+    aces: Number(match[3]),
+    blocks: Number(match[4]),
+    serve,
+  };
 }

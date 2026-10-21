@@ -1,7 +1,13 @@
 import type { Api } from "grammy";
-import { ANNOUNCE_HOURS_BEFORE, REMIND_HOURS_BEFORE } from "../config.ts";
-import type { Data, Slot, Store, Training } from "../storage.ts";
-import { POLL_OPTIONS, attendanceText, pollQuestion } from "./texts.ts";
+import {
+  ANNOUNCE_HOURS_BEFORE,
+  MATCH_ANNOUNCE_HOUR,
+  MATCH_ANNOUNCE_WEEKDAY,
+  MATCH_DAY_BEFORE_HOUR,
+  REMIND_HOURS_BEFORE,
+} from "../config.ts";
+import type { Data, Match, Slot, Store, Training } from "../storage.ts";
+import { POLL_OPTIONS, attendanceText, matchPollQuestion, pollQuestion } from "./texts.ts";
 import { addDays, weekdayOf, zonedDate, zonedParts } from "../time.ts";
 
 const HOUR = 3600_000;
@@ -83,9 +89,94 @@ export async function closePoll(api: Api, training: Training): Promise<void> {
   }
 }
 
+export function matchAnnounceAt(startsAt: Date): Date {
+  const matchDay = zonedParts(startsAt);
+  for (let back = 0; back <= 7; back += 1) {
+    const day = addDays(matchDay, -back);
+    if (weekdayOf(day) !== MATCH_ANNOUNCE_WEEKDAY) continue;
+    const at = zonedDate(day.year, day.month, day.day, MATCH_ANNOUNCE_HOUR, 0);
+    if (at.getTime() < startsAt.getTime()) return at;
+  }
+  return new Date(startsAt.getTime() - 48 * HOUR);
+}
+
+export function matchDayBeforeAt(startsAt: Date): Date {
+  const day = addDays(zonedParts(startsAt), -1);
+  return zonedDate(day.year, day.month, day.day, MATCH_DAY_BEFORE_HOUR, 0);
+}
+
+export async function announceMatch(api: Api, store: Store, match: Match, now: Date): Promise<void> {
+  const chatId = store.data.chatId;
+  if (chatId === null) throw new Error("Бот ще не підключений до групи");
+
+  const message = await api.sendPoll(
+    chatId,
+    matchPollQuestion(match),
+    POLL_OPTIONS.map((option) => ({ text: option.text })),
+    { is_anonymous: false, allows_multiple_answers: false },
+  );
+  match.poll = {
+    chatId,
+    pollId: message.poll.id,
+    messageId: message.message_id,
+    votes: {},
+    reminded: now.getTime() >= new Date(match.startsAt).getTime() - REMIND_HOURS_BEFORE * HOUR,
+    closed: false,
+  };
+  await store.save();
+}
+
+async function tickMatches(api: Api, store: Store, now: Date): Promise<void> {
+  const data = store.data;
+  for (const match of data.matches) {
+    const start = new Date(match.startsAt).getTime();
+    const poll = match.poll;
+
+    if (!poll) {
+      if (now.getTime() < start && now.getTime() >= matchAnnounceAt(new Date(match.startsAt)).getTime()) {
+        await announceMatch(api, store, match, now);
+      }
+      continue;
+    }
+    if (poll.chatId !== data.chatId) continue;
+
+    const remindAt = start - REMIND_HOURS_BEFORE * HOUR;
+    if (!poll.remindedDayBefore && !poll.reminded && now.getTime() >= matchDayBeforeAt(new Date(match.startsAt)).getTime() && now.getTime() < remindAt) {
+      const title = `📅 Завтра матч проти ${match.opponent}! Хто ще не відповів — відміться в опитуванні.`;
+      await api.sendMessage(poll.chatId, attendanceText({ ...match, votes: poll.votes }, data, title), {
+        parse_mode: "HTML",
+        reply_parameters: { message_id: poll.messageId, allow_sending_without_reply: true },
+      });
+      poll.remindedDayBefore = true;
+      await store.save();
+    }
+
+    if (!poll.reminded && now.getTime() >= start - REMIND_HOURS_BEFORE * HOUR && now.getTime() < start) {
+      const title = `⏰ Матч проти ${match.opponent}:`;
+      await api.sendMessage(poll.chatId, attendanceText({ ...match, votes: poll.votes }, data, title), {
+        parse_mode: "HTML",
+        reply_parameters: { message_id: poll.messageId, allow_sending_without_reply: true },
+      });
+      poll.reminded = true;
+      await store.save();
+    }
+
+    if (!poll.closed && now.getTime() >= start) {
+      try {
+        await api.stopPoll(poll.chatId, poll.messageId);
+      } catch {
+      }
+      poll.closed = true;
+      await store.save();
+    }
+  }
+}
+
 export async function tick(api: Api, store: Store, now: Date): Promise<void> {
   const data = store.data;
   if (data.chatId === null) return;
+
+  await tickMatches(api, store, now);
 
   for (const occurrence of upcomingOccurrences(data.slots, now)) {
     const announceAt = occurrence.startsAt.getTime() - ANNOUNCE_HOURS_BEFORE * HOUR;
